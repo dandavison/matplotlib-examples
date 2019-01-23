@@ -1,8 +1,10 @@
+from collections import Counter
+
 import matplotlib
 matplotlib.use('Qt5Agg')
 import numpy as np
 from matplotlib import pyplot as plt
-from numpy import ceil, sqrt
+from numpy import ceil, sqrt, sum
 
 
 plt.rcParams.update({'figure.autolayout': True})
@@ -16,25 +18,45 @@ def plot_binary_classification(df, target):
     n_obs, n_features = df.shape
     nrows, ncols = _choose_subplot_dimensions(n_features)
     fig, axes_array = plt.subplots(nrows, ncols)
+
     for feature, ax in zip(df.columns, axes_array.ravel()):
-        _plot_feature(feature, ax, df, y)
+        x = df[feature]
+
+        if len(set(x)) == 2:
+            _plot_feature_barplot(x, y, ax)
+        else:
+            _plot_feature_histogram(x, y, ax)
+
+        ax.get_yaxis().set_visible(False)
+        for side in ['top', 'right', 'left']:
+            ax.spines[side].set_visible(False)
+        ax.set_title(feature, fontsize=5)
+
     plt.show()
 
 
-def _plot_feature(feature, ax, df, y):
-    x = df[feature]
-    # TODO: Handle categorical features.
+def _plot_feature_barplot(x, y, ax):
+    def heights(items):
+        counts = np.array([n for k, n in items])
+        return counts / sum(counts)
+
+    x_True = sorted(Counter(x[y]).items())
+    x_False = sorted(Counter(x[~y]).items())
+    bars1 = heights(x_True)
+    bars2 = heights(x_False)
+    bar_width = 0.15
+    r1 = np.arange(len(bars1))
+    r2 = [r + bar_width for r in r1]
+    ax.bar(r1, bars1, alpha=0.6, width=bar_width, edgecolor='white', label='var1')
+    ax.bar(r2, bars2, color='green', alpha=0.6, width=bar_width, edgecolor='white', label='var2')
+
+
+def _plot_feature_histogram(x, y, ax):
     if np.issubdtype(x.dtype, np.bool):
         x = x.astype(np.int)
-
     range = tuple(x.quantile([0.05, 0.95]))
-    ax.hist(x[y], range=range, density=True)
-    ax.hist(x[~y], range=range, density=True, alpha=0.6, color="green")
-
-    ax.get_yaxis().set_visible(False)
-    for side in ['top', 'right', 'left']:
-        ax.spines[side].set_visible(False)
-    ax.set_title(feature, fontsize=5)
+    ax.hist(x[y], range=range, density=True, alpha=0.6)
+    ax.hist(x[~y], range=range, density=True, color="green", alpha=0.6)
 
 
 def _choose_subplot_dimensions(n):
