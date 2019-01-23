@@ -19,20 +19,27 @@ def plot_binary_classification(df, target):
     nrows, ncols = _choose_subplot_dimensions(n_features)
     fig, axes_array = plt.subplots(nrows, ncols)
 
-    for feature, ax in zip(df.columns, axes_array.ravel()):
-        x = df[feature]
+    features = list(df.columns) + [None] * ((nrows * ncols) - len(df.columns))
 
-        if len(set(x)) == 2:
-            _plot_feature_barplot(x, y, ax)
-        else:
-            _plot_feature_histogram(x, y, ax)
+    for feature, ax in zip(features, axes_array.ravel()):
+        if feature:
+            x = df[feature]
 
-        ax.get_yaxis().set_visible(False)
-        for side in ['top', 'right', 'left']:
-            ax.spines[side].set_visible(False)
-        ax.set_title(feature, fontsize=5)
+            if len(set(x)) == 2:
+                _plot_feature_barplot(x, y, ax)
+            else:
+                _plot_feature_histogram(x, y, ax)
+
+            ax.set_title(feature, fontsize=5)
+        _clean_up(ax)
 
     plt.show()
+
+
+def _clean_up(ax):
+    ax.get_yaxis().set_visible(False)
+    for side in ['top', 'right', 'left']:
+        ax.spines[side].set_visible(False)
 
 
 def _plot_feature_barplot(x, y, ax):
