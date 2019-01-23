@@ -22,15 +22,19 @@ def plot_binary_classification(df, target):
 
 
 def _plot_feature(feature, ax, df, y):
-    # TODO: Handle categorical features. This currently assumes all features are numerical or can
-    # be cast to float (e.g. a one-hot encoded column will be cast to {0.0, 1.0}).
-    x = df[feature].astype(np.float)
-    ax.hist(x[y], density=True)
-    ax.hist(x[~y], density=True, alpha=0.6, color="green")
+    x = df[feature]
+    # TODO: Handle categorical features.
+    if np.issubdtype(x.dtype, np.bool):
+        x = x.astype(np.int)
+
+    range = tuple(x.quantile([0.05, 0.95]))
+    ax.hist(x[y], range=range, density=True)
+    ax.hist(x[~y], range=range, density=True, alpha=0.6, color="green")
+
     ax.get_yaxis().set_visible(False)
     for side in ['top', 'right', 'left']:
         ax.spines[side].set_visible(False)
-    ax.set_title(feature)
+    ax.set_title(feature, fontsize=5)
 
 
 def _choose_subplot_dimensions(n):
@@ -54,4 +58,3 @@ if __name__ == '__main__':
     DATA_FILE = '/tmp/creditcard.csv'
     df = pd.read_csv(DATA_FILE)
     plot_binary_classification(df, 'Class')
-
